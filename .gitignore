@@ -1,0 +1,47 @@
+# Local secrets
+config.json
+
+# Runtime logs / local state
+logs/
+diagnostics/
+*.jsonl
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.py[cod]
+*.egg-info/
+dist/
+*.whl
+
+# Build outputs
+build/
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.app
+*.dmg
+*.zip
+*.tar.gz
+
+# macOS
+.DS_Store
+.build/
+
+# Windows
+Thumbs.db
+*.lnk
+.vs/
+*.user
+
+# IDE
+.vscode/
+.idea/
+
+# Backups
+*.bak.*

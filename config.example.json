@@ -1,0 +1,84 @@
+{
+  "notifier": {
+    "type": "bark",
+    "bark_key": "YOUR_BARK_KEY",
+    "bark_server": "https://api.day.app",
+    "group": "AgentWatch",
+    "level": "timeSensitive"
+  },
+  "risk_policy": {
+    "dangerous_commands": [
+      "rm -rf",
+      "sudo",
+      "git push",
+      "git reset --hard",
+      "git clean",
+      "chmod",
+      "chown",
+      "dd ",
+      "mkfs",
+      "killall"
+    ],
+    "dangerous_paths": [
+      ".env",
+      ".ssh",
+      "id_rsa",
+      "id_ed25519",
+      ".git",
+      "secrets",
+      "token",
+      "credentials",
+      "private_key"
+    ],
+    "protected_paths": [],
+    "dangerous_file_extensions": [
+      ".pem",
+      ".key"
+    ]
+  },
+  "task_boundary": {
+    "enabled": true,
+    "task_name": "default",
+    "allowed_paths": [],
+    "forbidden_paths": [],
+    "forbidden_keywords": [
+      "training pipeline",
+      "raw data",
+      "delete dataset",
+      "rewrite architecture"
+    ]
+  },
+  "failure_policy": {
+    "consecutive_failure_threshold": 3
+  },
+  "notification_policy": {
+    "mode": "actionable",
+    "_comment": "actionable = only push when user interaction is needed; verbose = push every event",
+    "notify_on_task_done": true,
+    "notify_on_interactive_attention": true,
+    "notify_on_pretooluse": false,
+    "notify_on_danger": false,
+    "notify_on_drift": false,
+    "notify_on_failure": false,
+    "log_silent_events": true
+  },
+  "approval_detection": {
+    "enabled": true,
+    "delay_seconds": 4,
+    "candidate_tools": [
+      "Bash",
+      "Edit",
+      "Write",
+      "MultiEdit",
+      "NotebookEdit"
+    ],
+    "timeout_watch_notify": false,
+    "timeout_log_only": true,
+    "cooldown_seconds": 30
+  },
+  "persona": {
+    "enabled": true,
+    "theme": "boss",
+    "user_role": "总裁"
+  }
+}
