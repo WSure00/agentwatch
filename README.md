@@ -1,8 +1,8 @@
 # AgentWatch
 
-**Apple Watch notifications for Claude Code and AI agent workflows.**
+**Apple Watch / Android notifications for Claude Code and AI agent workflows.**
 
-AgentWatch lets you walk away from your Mac (or Windows PC) while Claude Code works. When the agent needs your approval, needs attention, or finishes a task — your Apple Watch vibrates with a short event card. No more babysitting the terminal.
+AgentWatch lets you walk away from your Mac (or Windows PC) while Claude Code works. When the agent needs your approval, needs attention, or finishes a task — your wrist vibrates with a short event card. Works with Apple Watch, Android phones, and connected bands (Huawei/Xiaomi/Samsung bands that sync phone notifications).
 
 > 中文用户请查看 [README_CN.md](README_CN.md)
 
@@ -67,9 +67,9 @@ Claude Code is powerful — but you don't want to watch every command. You only 
 
 **Windows tray app**: Right-click for full status, persona switching, test push, task boundaries.
 
-**Apple Watch notification**: Title + risk level + suggested action in a compact card format.
+**Apple Watch / Android band notification**: Title + risk level + suggested action in a compact card format.
 
-**iPhone notification**: Same card syncs to Notification Center.
+**Phone notification**: Same card syncs to Notification Center.
 
 ---
 
@@ -79,7 +79,7 @@ Claude Code is powerful — but you don't want to watch every command. You only 
 
 | Feature | Description |
 |---------|-------------|
-| **Apple Watch / iPhone notifications** | Via [Bark](https://apps.apple.com/app/bark/id1403753865) (free, open source) |
+| **Apple Watch / Android notifications** | Via [Bark](https://apps.apple.com/app/bark/id1403753865) (free, iOS & Android) |
 | **PermissionRequest hook** | Reliable signal for real "Allow this bash command?" dialogs |
 | **PermissionDenied hook** | Logs when you explicitly deny an operation |
 | **Actionable notification mode** | Only pushes when user interaction is genuinely needed |
@@ -124,7 +124,7 @@ PermissionDenied  ──▶     log only (no push)
                            │
                            ├── notification policy (actionable by default)
                            ├── persona message builder
-                           ├── Bark push ──▶ iPhone ──▶ Apple Watch
+                           ├── Bark push ──▶ phone ──▶ Apple Watch / Android band
                            └── logs/agentwatch_events.jsonl
 ```
 
@@ -157,7 +157,18 @@ After downloading, unzip and run:
 - **macOS**: Double-click `AgentWatch.app` (runs in menu bar, no Dock icon)
 - Then configure your Bark key from `● AW` → `Add / Update Bark Key...`
 
-> ⚠️ You still need to install Claude Code hooks from the CLI once: `bash install_claude_hooks.sh` (macOS) or the PowerShell equivalent (Windows). The desktop app is a convenience panel — hooks work independently.
+> ⚠️ **One-time setup**: install Claude Code hooks from CLI. Copy-paste the command below into your terminal:
+>
+> **macOS:**
+> ```bash
+> bash ~/Projects/agentwatch/install_claude_hooks.sh
+> ```
+> **Windows:**
+> ```powershell
+> powershell -ExecutionPolicy Bypass -File %USERPROFILE%\Projects\agentwatch\windows\install_claude_hooks_windows.ps1
+> ```
+>
+> After that, the desktop app and hooks work independently — you can close the app and notifications still fire.
 
 ### Option 3 — CLI + Build from Source
 
@@ -171,7 +182,7 @@ Clone the repo and build the desktop apps yourself with a single command (requir
 - macOS (Apple Silicon or Intel)
 - Python 3.10+
 - Claude Code (CLI or VS Code extension)
-- iPhone with [Bark](https://apps.apple.com/app/bark/id1403753865) installed
+- iPhone / Android phone with [Bark](https://apps.apple.com/app/bark/id1403753865) installed
 
 ### Install
 
@@ -219,7 +230,7 @@ Double-click alternatives (no terminal needed):
 - Windows 10/11
 - Python 3.10+
 - Claude Code (CLI or VS Code extension)
-- iPhone with [Bark](https://apps.apple.com/app/bark/id1403753865) installed
+- iPhone / Android phone with [Bark](https://apps.apple.com/app/bark/id1403753865) installed
 
 ### Install
 
@@ -257,11 +268,11 @@ Or double-click `Open AgentWatch Windows App.bat`.
 
 ## Bark Setup
 
-AgentWatch sends notifications through [Bark](https://apps.apple.com/app/bark/id1403753865), a free open-source iOS push app.
+AgentWatch sends notifications through [Bark](https://apps.apple.com/app/bark/id1403753865), a free open-source push app for iOS and Android.
 
 ### Step-by-Step
 
-1. **Install Bark** from the iOS App Store on your iPhone
+1. **Install Bark** from the App Store (iOS) or Google Play (Android)
 2. **Open Bark** → the URL at the top shows your key:
    ```
    https://api.day.app/YOUR_KEY/
@@ -278,11 +289,13 @@ AgentWatch sends notifications through [Bark](https://apps.apple.com/app/bark/id
 
 5. **Test**: `agentwatch config test` (or click "Test Push" in the GUI)
 
-You should receive "AgentWatch Bark 测试" on your iPhone and Apple Watch.
+You should receive "AgentWatch Bark 测试" on your phone and wearable device.
 
-### Verify Apple Watch Sync
-- iPhone: Settings → Notifications → Bark → Allow Notifications ✅
+### Verify Phone & Wearable Sync
+- iPhone: Settings → Notifications → Bark → Allow ✅
+- Android: Settings → Notifications → Bark → Allow ✅
 - Apple Watch: Watch app → Notifications → Mirror iPhone Alerts from Bark ✅
+- Android band/watch (Huawei/Xiaomi/Samsung): enable Bark notification sync in your companion app (e.g., Huawei Health, Mi Fitness, Galaxy Wearable)
 
 ---
 
@@ -488,11 +501,13 @@ agentwatch simulate permission-denied   # deny → log only
 
 ## Troubleshooting
 
-### Apple Watch not vibrating
-1. Confirm Bark is installed and working on your iPhone (send a test from the Bark app itself)
+### Phone / watch not vibrating
+1. Confirm Bark is installed and working on your phone (send a test from the Bark app itself)
 2. Run `agentwatch config test` — should say "Notification sent"
-3. iPhone: Settings → Notifications → Bark → Allow Notifications ✅
-4. Apple Watch: Watch app → Notifications → Mirror iPhone Alerts from Bark ✅
+3. iPhone: Settings → Notifications → Bark → Allow ✅
+4. Android: Settings → Notifications → Bark → Allow ✅
+5. Apple Watch: Watch app → Notifications → Mirror iPhone Alerts from Bark ✅
+6. Android band/watch: enable Bark notification sync in your companion app (Huawei Health, Mi Fitness, Galaxy Wearable, etc.)
 
 ### Bark returns "device token not found"
 - Your Bark key is incorrect or expired
