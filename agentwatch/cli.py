@@ -24,6 +24,7 @@ from agentwatch.config import (
     get_risk_policy,
     get_task_boundary,
     get_failure_policy,
+    get_focus_detection_config,
 )
 from agentwatch.event_parser import (
     parse_event,
@@ -243,6 +244,17 @@ def cmd_hook(event_name: str) -> None:
         # Decide whether to notify.
         notified = should_send_notification(final_type, npolicy)
 
+        # Detect presence state for logging (only when event will be notified).
+        presence_state_str = None
+        if notified and final_type != "info":
+            try:
+                from agentwatch.presence import get_presence_state
+                focus_config = get_focus_detection_config(config)
+                presence_state = get_presence_state(focus_config)
+                presence_state_str = presence_state.value
+            except Exception:
+                presence_state_str = "detection_failed"
+
         # Build log entry.
         log_entry = {
             "timestamp": parsed.get("timestamp", timestamp_iso()),
@@ -254,6 +266,7 @@ def cmd_hook(event_name: str) -> None:
             "suggestion": (danger_info or drift_info or failure_info or {}).get("suggestion", ""),
             "notified": notified,
             "notification_mode": notification_mode,
+            "presence_state": presence_state_str,
             "source": source,
             "persona_theme": (config.get("persona", {}) or {}).get("theme", "off") if (config.get("persona", {}) or {}).get("enabled") else "off",
             "raw_event": raw or {},
@@ -261,7 +274,7 @@ def cmd_hook(event_name: str) -> None:
         append_event(log_entry)
 
         if notified and final_type != "info":
-            notify(msg["title"], msg["body"], config)
+            notify(msg["title"], msg["body"], config, event_type=final_type)
 
     except Exception as exc:
         print(f"[AgentWatch] ERROR in hook processing: {exc}", file=sys.stderr, flush=True)
@@ -405,6 +418,13 @@ def cmd_simulate(args: argparse.Namespace) -> None:
     npolicy = get_notification_policy(config)
     notification_mode = npolicy.get("mode", "actionable")
     force_notify = getattr(args, "notify", False)
+    presence_override = getattr(args, "presence", None)
+
+    if presence_override:
+        print(f"[AgentWatch] Presence override: {presence_override}")
+
+    # Presence state string for log entries.
+    _sim_presence = presence_override or "detected"
 
     # ── permission-request: simulate PermissionRequest hook ─────────────
     if scenario == "permission-request":
@@ -421,12 +441,13 @@ def cmd_simulate(args: argparse.Namespace) -> None:
             "timestamp": timestamp_iso(), "event_name": "simulate",
             "event_type": etype, "title": msg["title"], "body": msg["body"],
             "risk": "中", "suggestion": "", "notified": notified,
-            "notification_mode": notification_mode, "source": "hook_permission_request",
+            "notification_mode": notification_mode, "presence_state": _sim_presence,
+            "source": "hook_permission_request",
             "raw_event": {"scenario": scenario},
         }
         append_event(log_entry)
         if notified:
-            ok = notify(msg["title"], msg["body"], config)
+            ok = notify(msg["title"], msg["body"], config, event_type=etype, presence_override=presence_override)
             if ok: print(f"[AgentWatch] Notification sent: {msg['title']}")
             else: print("[AgentWatch] Notification failed.")
         return
@@ -448,7 +469,8 @@ def cmd_simulate(args: argparse.Namespace) -> None:
             "timestamp": timestamp_iso(), "event_name": "simulate",
             "event_type": etype, "title": msg["title"], "body": msg["body"],
             "risk": "低", "suggestion": "已记录，无需操作", "notified": notified,
-            "notification_mode": notification_mode, "source": "hook_permission_denied",
+            "notification_mode": notification_mode, "presence_state": _sim_presence,
+            "source": "hook_permission_denied",
             "raw_event": {"scenario": scenario},
         }
         append_event(log_entry)
@@ -498,6 +520,7 @@ def cmd_simulate(args: argparse.Namespace) -> None:
                 "suggestion": msg["body"].split("\n")[-1].replace("建议：", "") if "\n建议：" in msg["body"] else "",
                 "notified": will_notify,
                 "notification_mode": notification_mode,
+                "presence_state": _sim_presence,
                 "source": source,
                 "raw_event": {"scenario": scenario, "pending_action_id": action_id},
             }
@@ -505,7 +528,7 @@ def cmd_simulate(args: argparse.Namespace) -> None:
             mark_pending_notified(action_id)
 
             if will_notify:
-                ok = notify(msg["title"], msg["body"], config)
+                ok = notify(msg["title"], msg["body"], config, event_type=etype, presence_override=presence_override)
                 if ok:
                     print(f"[AgentWatch] Notification sent: {msg['title']}")
                 else:
@@ -547,6 +570,7 @@ def cmd_simulate(args: argparse.Namespace) -> None:
             "suggestion": "",
             "notified": False,
             "notification_mode": notification_mode,
+            "presence_state": _sim_presence,
             "source": "simulate",
             "raw_event": {"scenario": scenario},
         }
@@ -612,13 +636,14 @@ def cmd_simulate(args: argparse.Namespace) -> None:
         "suggestion": (danger_info or drift_info or failure_info or {}).get("suggestion", ""),
         "notified": notified,
         "notification_mode": notification_mode,
+        "presence_state": _sim_presence,
         "source": "simulate",
         "raw_event": {"scenario": scenario},
     }
     append_event(log_entry)
 
     if notified:
-        ok = notify(msg["title"], msg["body"], config)
+        ok = notify(msg["title"], msg["body"], config, event_type=event_type, presence_override=presence_override)
         if ok:
             print(f"[AgentWatch] Notification sent: {msg['title']}")
         else:
@@ -749,6 +774,37 @@ def cmd_doctor() -> int:
         print(f"  Task:        {task.get('name', '?')}")
     else:
         print(f"  Task:        (none)")
+
+    # Presence detection tools
+    focus_config = get_focus_detection_config(config)
+    if focus_config.get("enabled", True):
+        import shutil as _shutil
+
+        session_type = os.environ.get("XDG_SESSION_TYPE", "unknown")
+        has_xprintidle = _shutil.which("xprintidle") is not None
+        has_xdotool = _shutil.which("xdotool") is not None
+        has_loginctl = _shutil.which("loginctl") is not None
+        has_windowid = bool(os.environ.get("WINDOWID"))
+
+        tools_found = sum([has_xprintidle, has_xdotool, has_loginctl])
+        if tools_found >= 2:
+            ptag = _ansi("green") + "OK" + _ansi("reset")
+        elif tools_found >= 1:
+            ptag = _ansi("yellow") + "Partial" + _ansi("reset")
+        else:
+            ptag = _ansi("red") + "Unavailable" + _ansi("reset")
+            issues += 1
+
+        print(f"  Presence:    {ptag} (session={session_type})")
+        idle_tag = _ansi("green") + "✓" + _ansi("reset") if has_xprintidle else _ansi("yellow") + "✗" + _ansi("reset")
+        focus_tag = _ansi("green") + "✓" + _ansi("reset") if has_xdotool else _ansi("yellow") + "✗" + _ansi("reset")
+        lock_tag = _ansi("green") + "✓" + _ansi("reset") if has_loginctl else _ansi("yellow") + "✗" + _ansi("reset")
+        win_tag = _ansi("green") + "✓" + _ansi("reset") if has_windowid else _ansi("dim") + "—" + _ansi("reset")
+        print(f"               idle:{idle_tag}  focus:{focus_tag}  lock:{lock_tag}  WINDOWID:{win_tag}")
+        if not has_xprintidle and not has_xdotool:
+            print(f"               Install: {_ansi('dim')}sudo apt install xprintidle xdotool{_ansi('reset')}")
+    else:
+        print(f"  Presence:    {_ansi('dim')}Disabled{_ansi('reset')}")
 
     # Summary
     print()
@@ -1103,7 +1159,7 @@ def cmd_pending_check(args: argparse.Namespace) -> None:
     mark_pending_notified(action_id)
 
     if notified:
-        notify(msg["title"], msg["body"], config)
+        notify(msg["title"], msg["body"], config, event_type=etype)
 
     raise SystemExit(0)
 
@@ -1287,6 +1343,12 @@ def build_parser() -> argparse.ArgumentParser:
         "approval-pending", "auto-exec",
     ])
     p_sim.add_argument("--notify", action="store_true", help="Force push notification even in actionable mode")
+    p_sim.add_argument(
+        "--presence",
+        choices=["away", "present_unfocused", "present_focused"],
+        default=None,
+        help="Override presence state for testing (away/present_unfocused/present_focused)",
+    )
 
     # pending-check (internal command, spawned by hooks)
     p_pc = sub.add_parser("pending-check", help="[Internal] Background approval checker")

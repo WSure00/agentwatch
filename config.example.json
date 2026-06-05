@@ -83,6 +83,12 @@
     "timeout_log_only": true,
     "cooldown_seconds": 30
   },
+  "focus_detection": {
+    "_comment": "Presence-aware notification routing. Detects idle/lock/focus to decide Bark vs desktop vs silent. Auto-degrades when tools are missing.",
+    "enabled": true,
+    "idle_threshold_seconds": 60,
+    "always_bark_on_danger": true
+  },
   "persona": {
     "enabled": true,
     "theme": "boss",

@@ -62,6 +62,19 @@ if ! command -v notify-send >/dev/null 2>&1; then
     echo "               Arch:           sudo pacman -S libnotify"
 fi
 
+# --- presence detection tools ---
+MISSING_PRESENCE=""
+command -v xprintidle >/dev/null 2>&1 || MISSING_PRESENCE="${MISSING_PRESENCE}xprintidle "
+command -v xdotool    >/dev/null 2>&1 || MISSING_PRESENCE="${MISSING_PRESENCE}xdotool "
+if [ -n "$MISSING_PRESENCE" ]; then
+    echo ""
+    echo "[AgentWatch] Note: presence detection tools not found: ${MISSING_PRESENCE}"
+    echo "             These enable smart notification routing (idle/lock/focus)."
+    echo "             Without them, notifications use conservative fallbacks."
+    echo "             Install (optional):"
+    echo "               Debian/Ubuntu:  sudo apt install xprintidle xdotool"
+fi
+
 # --- next steps ---
 echo ""
 echo "============================================"

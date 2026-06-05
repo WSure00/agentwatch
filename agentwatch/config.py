@@ -146,6 +146,20 @@ def get_desktop_config(config: dict[str, Any]) -> dict[str, Any]:
     return dc
 
 
+def get_focus_detection_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Extract the focus/presence detection section.
+
+    Defaults to enabled so new installs get presence routing out of the box.
+    Old config.json files without this section degrade gracefully (all defaults
+    kick in and detection tools are probed at runtime).
+    """
+    fc = config.get("focus_detection", {}) or {}
+    fc.setdefault("enabled", True)
+    fc.setdefault("idle_threshold_seconds", 60)
+    fc.setdefault("always_bark_on_danger", True)
+    return fc
+
+
 def get_risk_policy(config: dict[str, Any]) -> dict[str, Any]:
     return config.get("risk_policy", {})
 
