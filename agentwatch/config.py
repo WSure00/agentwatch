@@ -132,6 +132,20 @@ def get_notifier_config(config: dict[str, Any]) -> dict[str, Any]:
     return nc
 
 
+def get_desktop_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Extract the local desktop-notification (notify-send) section.
+
+    Defaults to disabled so existing config.json files (which predate this
+    feature) behave exactly as before.
+    """
+    dc = config.get("desktop_notify", {}) or {}
+    dc.setdefault("enabled", False)
+    dc.setdefault("urgency", "normal")
+    dc.setdefault("expire_ms", 8000)
+    dc.setdefault("icon", "dialog-information")
+    return dc
+
+
 def get_risk_policy(config: dict[str, Any]) -> dict[str, Any]:
     return config.get("risk_policy", {})
 

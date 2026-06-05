@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AgentWatch
+Comment=Claude Code / AI Agent status monitor
+Exec=bash "__PROJECT_DIR__/linux/agentwatch-monitor.sh"
+Path=__PROJECT_DIR__
+Icon=dialog-information
+Terminal=true
+Categories=Development;
+Keywords=claude;agent;monitor;bark;

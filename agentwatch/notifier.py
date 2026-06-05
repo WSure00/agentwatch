@@ -7,7 +7,36 @@ import urllib.error
 import urllib.request
 from typing import Any
 
+from agentwatch.desktop import send_desktop
 from agentwatch.utils import url_encode
+
+
+def notify(title: str, body: str, config: dict[str, Any]) -> bool:
+    """Dispatch a notification across all configured backends.
+
+    Reads the full *config* and fans out to:
+      * Bark (Apple Watch / iPhone)  — config["notifier"]
+      * Local desktop notification    — config["desktop_notify"]
+
+    The two backends are independent; returns True if *any* backend reported
+    success.  Never raises — callers (hooks) must stay exit-0.
+    """
+    notifier_config = config.get("notifier", {}) or {}
+    desktop_config = config.get("desktop_notify", {}) or {}
+
+    bark_ok = False
+    try:
+        bark_ok = send_bark(title, body, notifier_config)
+    except Exception as exc:  # noqa: BLE001 — never crash a hook.
+        print(f"[AgentWatch] Bark dispatch error: {exc}", flush=True)
+
+    desktop_ok = False
+    try:
+        desktop_ok = send_desktop(title, body, desktop_config)
+    except Exception as exc:  # noqa: BLE001 — never crash a hook.
+        print(f"[AgentWatch] Desktop dispatch error: {exc}", flush=True)
+
+    return bark_ok or desktop_ok
 
 
 def send_bark(title: str, body: str, notifier_config: dict[str, Any]) -> bool:

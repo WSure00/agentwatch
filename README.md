@@ -17,19 +17,20 @@ AgentWatch lets you walk away from your Mac (or Windows PC) while Claude Code wo
 5. [Installation Methods](#installation-methods)
 6. [Quick Start: macOS](#quick-start-macos)
 7. [Quick Start: Windows](#quick-start-windows)
-8. [Bark Setup](#bark-setup)
-9. [Claude Code Hooks](#claude-code-hooks)
-10. [Notification Policy](#notification-policy)
-11. [Persona Themes](#persona-themes)
-12. [macOS Menu Bar App](#macos-menu-bar-app)
-13. [Windows Tray App](#windows-tray-app)
-14. [Common Commands](#common-commands)
-15. [Testing](#testing)
-16. [Troubleshooting](#troubleshooting)
-17. [Privacy & Security](#privacy--security)
-18. [Roadmap](#roadmap)
-19. [License](#license)
-20. [Contributing](#contributing)
+8. [Quick Start: Linux](#quick-start-linux)
+9. [Bark Setup](#bark-setup)
+10. [Claude Code Hooks](#claude-code-hooks)
+11. [Notification Policy](#notification-policy)
+12. [Persona Themes](#persona-themes)
+13. [macOS Menu Bar App](#macos-menu-bar-app)
+14. [Windows Tray App](#windows-tray-app)
+15. [Common Commands](#common-commands)
+16. [Testing](#testing)
+17. [Troubleshooting](#troubleshooting)
+18. [Privacy & Security](#privacy--security)
+19. [Roadmap](#roadmap)
+20. [License](#license)
+21. [Contributing](#contributing)
 
 ---
 
@@ -264,6 +265,82 @@ build\windows\AgentWatchTray\AgentWatchTray.exe
 ```
 
 Or double-click `Open AgentWatch Windows App.bat`.
+
+---
+
+## Quick Start: Linux
+
+On Linux, AgentWatch runs as a terminal monitor and can pop **local desktop
+notifications** (via `notify-send`) in addition to — or instead of — pushing to
+your Apple Watch / phone through Bark. This means you get alerts on your desktop
+without reaching for your phone.
+
+### Prerequisites
+- A modern Linux distro (any desktop environment: GNOME / KDE / etc.)
+- Python 3.10+
+- Claude Code (CLI or VS Code extension)
+- `notify-send` for local desktop notifications (optional but recommended):
+  - Debian/Ubuntu: `sudo apt install libnotify-bin`
+  - Fedora: `sudo dnf install libnotify`
+  - Arch: `sudo pacman -S libnotify`
+- iPhone / Android phone with [Bark](https://apps.apple.com/app/bark/id1403753865) (optional — only needed for Watch/phone push)
+
+### Install
+
+```bash
+# Clone
+git clone https://github.com/dongxutang918-afk/agentwatch.git
+cd agentwatch
+
+# Setup Python environment (creates .venv, installs, init, doctor)
+bash linux/setup.sh
+
+# Configure Bark key (optional — local desktop notifications work without it)
+source .venv/bin/activate
+agentwatch config bark
+agentwatch config test
+
+# Install Claude Code hooks (manual, one-time — reuses the cross-platform script)
+bash install_claude_hooks.sh
+
+# Verify
+agentwatch doctor
+```
+
+### Launch the Monitor
+
+```bash
+bash linux/agentwatch-monitor.sh    # activates .venv and runs `agentwatch start`
+```
+
+### Optional: Add a Desktop Menu Entry
+
+```bash
+bash linux/install_desktop_entry.sh
+```
+
+This installs an `agentwatch.desktop` launcher into
+`~/.local/share/applications/` so you can start AgentWatch from your application
+menu. Remove it with `rm ~/.local/share/applications/agentwatch.desktop`.
+
+### Local Desktop Notifications
+
+The `desktop_notify` block in `config.json` controls local notifications:
+
+```json
+"desktop_notify": {
+  "enabled": true,
+  "urgency": "normal",
+  "expire_ms": 8000,
+  "icon": "dialog-information"
+}
+```
+
+- `enabled` — turn local desktop notifications on/off (default `true`).
+- They run **alongside** Bark — disable Bark and you get desktop-only alerts;
+  configure both and you get both.
+- On macOS / Windows, or if `notify-send` is missing, this backend is silently
+  skipped — no errors, Bark behaves exactly as before.
 
 ---
 

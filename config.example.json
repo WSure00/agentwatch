@@ -6,6 +6,13 @@
     "group": "AgentWatch",
     "level": "timeSensitive"
   },
+  "desktop_notify": {
+    "_comment": "Linux local desktop notifications via notify-send. Runs alongside Bark; silently skipped on macOS/Windows or if notify-send is missing.",
+    "enabled": true,
+    "urgency": "normal",
+    "expire_ms": 8000,
+    "icon": "dialog-information"
+  },
   "risk_policy": {
     "dangerous_commands": [
       "rm -rf",
